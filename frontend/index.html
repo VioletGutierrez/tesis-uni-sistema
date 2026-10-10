@@ -1,154 +1,882 @@
-x<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UNI - Sistema de Gestion de Tesis</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            uniPrimary: '#1e3a8a',
-            uniSecondary: '#0284c7'
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNI - Sistema de Gestion de Tesis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        uniPrimary: '#1e3a8a',
+                        uniSecondary: '#0284c7'
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: 0, transform: 'translateY(10px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+                        slideIn: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(0)' } }
+                    },
+                    animation: {
+                        fadeIn: 'fadeIn 0.3s ease-out',
+                        slideIn: 'slideIn 0.3s ease-out'
+                    }
+                }
+            }
         }
-      }
-    }
-  </script>
+    </script>
+    <style>
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px white inset !important;
+            -webkit-text-fill-color: #1e293b !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        html, body { height: 100%; }
+        body { display: flex; flex-direction: column; min-height: 100vh; }
+        main { flex: 1 0 auto; }
+        footer { flex-shrink: 0; }
+
+        /* CRITICO: Oculta secciones sin que Tailwind lo sobreescriba */
+        .hidden-section { display: none !important; }
+
+        .icon {
+            width: 1em;
+            height: 1em;
+            display: inline-block;
+            vertical-align: -0.125em;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        #tutorDropdownMenu {
+            animation: dropdownOpen 0.15s ease-out;
+            transform-origin: top;
+        }
+
+        @keyframes dropdownOpen {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background-color 0.15s;
+            font-size: 14px;
+        }
+
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover { background-color: #f1f5f9; }
+        .dropdown-item.selected {
+            background-color: #e0f2fe;
+            color: #0284c7;
+            font-weight: 600;
+        }
+
+        /* Tabs del admin */
+        .tab-btn {
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover {
+            color: #0284c7;
+            background-color: #f8fafc;
+        }
+        .tab-btn-active {
+            color: #1e3a8a;
+            border-bottom: 3px solid #1e3a8a;
+            background-color: #f8fafc;
+        }
+    </style>
 </head>
-<body class="h-full bg-slate-50 font-sans text-slate-800">
-  <!-- HEADER -->
-  <header class="bg-uniPrimary text-white shadow-md" role="banner">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <div class="bg-white text-uniPrimary font-bold p-2 rounded shadow text-sm">UNI</div>
-        <h1 class="text-lg font-bold">Sistema de Gestion de Tesis</h1>
-      </div>
-      <div id="userInfo" class="text-sm hidden">
-        <span id="userName"></span>
-        <button id="btnLogout" class="ml-3 bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-xs">Salir</button>
-      </div>
-    </div>
-  </header>
 
-  <!-- LOGIN -->
-  <div id="loginSection" class="max-w-md mx-auto mt-16 bg-white p-8 rounded-xl shadow-lg">
-    <h2 class="text-2xl font-bold text-center text-uniPrimary mb-6">Iniciar Sesion</h2>
-    <form id="formLogin" class="space-y-4">
-      <div>
-        <label class="block text-sm font-bold mb-1">Correo Institucional</label>
-        <input type="email" id="loginEmail" required placeholder="usuario@uni.edu.ni"
-          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary focus:outline-none">
-      </div>
-      <div>
-        <label class="block text-sm font-bold mb-1">Contrasena</label>
-        <input type="password" id="loginPassword" required placeholder="********"
-          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary focus:outline-none">
-      </div>
-      <div id="loginAlert" class="hidden p-3 rounded text-sm"></div>
-      <button type="submit" class="w-full bg-uniPrimary hover:bg-blue-900 text-white py-2 rounded-lg font-semibold">
-        Ingresar
-      </button>
-    </form>
-    <p class="text-center text-xs text-slate-500 mt-4">
-      <a href="#" id="linkRegister" class="text-uniSecondary hover:underline">Registrarse</a>
-    </p>
-  </div>
+<body class="bg-slate-50 font-sans text-slate-800">
 
-  <!-- REGISTRO -->
-  <div id="registerSection" class="max-w-md mx-auto mt-16 bg-white p-8 rounded-xl shadow-lg hidden">
-    <h2 class="text-2xl font-bold text-center text-uniPrimary mb-6">Registro</h2>
-    <form id="formRegister" class="space-y-4">
-      <div>
-        <label class="block text-sm font-bold mb-1">Nombre Completo</label>
-        <input type="text" id="regNombre" required
-          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary">
-      </div>
-      <div>
-        <label class="block text-sm font-bold mb-1">Correo</label>
-        <input type="email" id="regEmail" required
-          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary">
-      </div>
-      <div>
-        <label class="block text-sm font-bold mb-1">Contrasena (min 8, 1 mayuscula, 1 numero)</label>
-        <input type="password" id="regPassword" required
-          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary">
-      </div>
-      <div>
-        <label class="block text-sm font-bold mb-1">Carnet</label>
-        <input type="text" id="regCarnet" placeholder="2026-0001U"
-          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary">
-      </div>
-      <div id="registerAlert" class="hidden p-3 rounded text-sm"></div>
-      <button type="submit" class="w-full bg-uniPrimary hover:bg-blue-900 text-white py-2 rounded-lg font-semibold">
-        Registrarse
-      </button>
-    </form>
-    <p class="text-center text-xs text-slate-500 mt-4">
-      <a href="#" id="linkLogin" class="text-uniSecondary hover:underline">Volver al login</a>
-    </p>
-  </div>
-
-  <!-- DASHBOARD -->
-  <div id="dashboardSection" class="hidden max-w-7xl mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-2xl font-bold text-uniPrimary">Panel de Tesis</h2>
-      <button id="btnNuevaTesis" class="bg-uniSecondary hover:bg-sky-700 text-white px-4 py-2 rounded-lg font-semibold">
-        + Nueva Tesis
-      </button>
-    </div>
-
-    <!-- Formulario Nueva Tesis -->
-    <div id="formTesisContainer" class="hidden bg-white p-6 rounded-xl shadow-md mb-6">
-      <h3 class="text-lg font-bold mb-4">Registrar Nueva Tesis</h3>
-      <form id="formTesis" class="space-y-4">
-        <input type="text" id="tesisTitulo" required placeholder="Titulo de la tesis"
-          class="w-full px-3 py-2 border rounded-lg">
-        <textarea id="tesisDescripcion" required placeholder="Descripcion" rows="3"
-          class="w-full px-3 py-2 border rounded-lg"></textarea>
-        <select id="tesisLinea" required class="w-full px-3 py-2 border rounded-lg">
-          <option value="">-- Seleccione linea de investigacion --</option>
-          <option value="IA">Inteligencia Artificial</option>
-          <option value="Desarrollo Web">Desarrollo Web</option>
-          <option value="Redes">Redes</option>
-          <option value="Base de Datos">Base de Datos</option>
-          <option value="Seguridad">Seguridad</option>
-          <option value="IoT">IoT</option>
-        </select>
-        <div id="tesisAlert" class="hidden p-3 rounded text-sm"></div>
-        <div class="flex space-x-3">
-          <button type="submit" class="bg-uniPrimary text-white px-4 py-2 rounded-lg">Guardar</button>
-          <button type="button" id="btnCancelarTesis" class="bg-slate-300 px-4 py-2 rounded-lg">Cancelar</button>
+    <!-- ==================== HEADER ==================== -->
+    <header class="bg-uniPrimary text-white shadow-md sticky top-0 z-40" role="banner">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white text-uniPrimary font-bold p-2 rounded shadow text-sm">UNI</div>
+                <h1 class="text-lg font-bold">Sistema de Gestion de Tesis</h1>
+            </div>
+            <div id="userInfo" class="text-sm hidden items-center gap-3">
+                <span id="userName" class="hidden sm:inline"></span>
+                <button id="btnAdmin" class="hidden bg-amber-500 hover:bg-amber-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                    <svg class="icon" viewBox="0 0 24 24" width="14" height="14">
+                        <path d="M12 2l9 4v6c0 5.55-3.84 10.74-9 12-5.16-1.26-9-6.45-9-12V6l9-4z"/>
+                    </svg>
+                    Admin
+                </button>
+                <button id="btnLogout"
+                    class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                    <svg class="icon" viewBox="0 0 24 24" width="14" height="14">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    Salir
+                </button>
+            </div>
         </div>
-      </form>
+    </header>
+
+    <!-- ==================== TOASTS ==================== -->
+    <div id="toastContainer" class="fixed top-20 right-4 z-50 space-y-2 w-80"></div>
+
+    <!-- ==================== MAIN ==================== -->
+    <main class="flex-1 relative">
+
+        <!-- ========== LOGIN ========== -->
+        <div id="loginSection" class="max-w-md mx-auto mt-16 bg-white p-8 rounded-xl shadow-lg animate-fadeIn">
+            <div class="flex justify-center mb-4">
+                <div class="bg-uniPrimary text-white p-3 rounded-full">
+                    <svg class="icon" viewBox="0 0 24 24" width="32" height="32">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-center text-uniPrimary mb-6">Iniciar Sesion</h2>
+            <form id="formLogin" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold mb-1">Correo Institucional</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="icon" viewBox="0 0 24 24" width="18" height="18">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                <polyline points="22,6 12,13 2,6" />
+                            </svg>
+                        </span>
+                        <input type="email" id="loginEmail" required placeholder="usuario@uni.edu.ni"
+                            class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary focus:outline-none transition-all duration-200">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Contrasena</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="icon" viewBox="0 0 24 24" width="18" height="18">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                        </span>
+                        <input type="password" id="loginPassword" required placeholder="********"
+                            class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary focus:outline-none transition-all duration-200">
+                    </div>
+                </div>
+                <div id="loginAlert" class="hidden p-3 rounded text-sm animate-fadeIn"></div>
+                <button type="submit" id="btnLoginSubmit"
+                    class="w-full bg-uniPrimary hover:bg-blue-900 text-white py-2 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2">
+                    <span id="loginSpinner"
+                        class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    <svg class="icon" viewBox="0 0 24 24" width="18" height="18">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                        <polyline points="10 17 15 12 10 7" />
+                        <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
+                    <span id="loginBtnText">Ingresar</span>
+                </button>
+            </form>
+            <p class="text-center text-xs text-slate-500 mt-4">
+                <a href="#" id="linkRegister"
+                    class="text-uniSecondary hover:underline transition-colors">Registrarse</a>
+            </p>
+        </div>
+
+        <!-- ========== REGISTRO ========== -->
+        <div id="registerSection" class="max-w-md mx-auto mt-16 bg-white p-8 rounded-xl shadow-lg hidden-section">
+            <div class="flex justify-center mb-4">
+                <div class="bg-uniSecondary text-white p-3 rounded-full">
+                    <svg class="icon" viewBox="0 0 24 24" width="32" height="32">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="8.5" cy="7" r="4" />
+                        <line x1="20" y1="8" x2="20" y2="14" />
+                        <line x1="23" y1="11" x2="17" y2="11" />
+                    </svg>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-center text-uniPrimary mb-6">Registro</h2>
+            <form id="formRegister" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold mb-1">Nombre Completo</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="icon" viewBox="0 0 24 24" width="18" height="18">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                        </span>
+                        <input type="text" id="regNombre" required
+                            class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary transition-all duration-200">
+                    </div>
+                    <small class="error-msg text-red-500 text-xs hidden" id="errRegNombre"></small>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Correo</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="icon" viewBox="0 0 24 24" width="18" height="18">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                <polyline points="22,6 12,13 2,6" />
+                            </svg>
+                        </span>
+                        <input type="email" id="regEmail" required
+                            class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary transition-all duration-200">
+                    </div>
+                    <small class="error-msg text-red-500 text-xs hidden" id="errRegEmail"></small>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Contrasena (min 8, 1 mayuscula, 1 numero)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="icon" viewBox="0 0 24 24" width="18" height="18">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                        </span>
+                        <input type="password" id="regPassword" required
+                            class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary transition-all duration-200">
+                    </div>
+                    <small class="error-msg text-red-500 text-xs hidden" id="errRegPassword"></small>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Carnet</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="icon" viewBox="0 0 24 24" width="18" height="18">
+                                <rect x="3" y="4" width="18" height="16" rx="2" />
+                                <line x1="3" y1="10" x2="21" y2="10" />
+                                <line x1="7" y1="15" x2="13" y2="15" />
+                            </svg>
+                        </span>
+                        <input type="text" id="regCarnet" placeholder="2026-0001U"
+                            class="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary transition-all duration-200">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Rol</label>
+                    <select id="regRol"
+                        class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary transition-all duration-200">
+                        <option value="estudiante">Estudiante</option>
+                        <option value="docente">Docente / Tutor</option>
+                        <option value="comision">Comision</option>
+                    </select>
+                </div>
+                <div id="registerAlert" class="hidden p-3 rounded text-sm animate-fadeIn"></div>
+                <button type="submit"
+                    class="w-full bg-uniPrimary hover:bg-blue-900 text-white py-2 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2">
+                    <svg class="icon" viewBox="0 0 24 24" width="18" height="18">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="8.5" cy="7" r="4" />
+                        <line x1="20" y1="8" x2="20" y2="14" />
+                        <line x1="23" y1="11" x2="17" y2="11" />
+                    </svg>
+                    Registrarse
+                </button>
+            </form>
+            <p class="text-center text-xs text-slate-500 mt-4">
+                <a href="#" id="linkLogin" class="text-uniSecondary hover:underline transition-colors">Volver al login</a>
+            </p>
+        </div>
+
+        <!-- ========== DASHBOARD ========== -->
+        <div id="dashboardSection" class="hidden-section max-w-7xl mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-uniPrimary flex items-center gap-2">
+                        <svg class="icon" viewBox="0 0 24 24" width="28" height="28">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="9" y1="15" x2="15" y2="15" />
+                        </svg>
+                        <span id="dashboardTitle">Panel de Tesis</span>
+                    </h2>
+                    <p id="dashboardSubtitle" class="text-sm text-slate-500 mt-1"></p>
+                </div>
+                <button id="btnNuevaTesis"
+                    class="bg-uniSecondary hover:bg-sky-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2">
+                    <svg class="icon" viewBox="0 0 24 24" width="18" height="18">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    Nueva Tesis
+                </button>
+            </div>
+
+            <!-- ===== PANEL DE ESTADISTICAS ===== -->
+            <div id="statsPanel" class="hidden-section grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-slate-400">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Total</p>
+                    <p id="statTotal" class="text-2xl font-bold text-slate-800">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-400">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Propuestas</p>
+                    <p id="statPropuesta" class="text-2xl font-bold text-yellow-600">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-400">
+                    <p class="text-xs text-slate-500 font-bold uppercase">En Revision</p>
+                    <p id="statEnRevision" class="text-2xl font-bold text-blue-600">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-400">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Aprobadas</p>
+                    <p id="statAprobado" class="text-2xl font-bold text-green-600">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-400">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Rechazadas</p>
+                    <p id="statRechazado" class="text-2xl font-bold text-red-600">0</p>
+                </div>
+                <div id="statSinTutorCard" class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-400">
+                    <p class="text-xs text-slate-500 font-bold uppercase">Sin Tutor</p>
+                    <p id="statSinTutor" class="text-2xl font-bold text-amber-600">0</p>
+                </div>
+            </div>
+
+            <!-- ===== FILTROS ===== -->
+            <div id="filtrosPanel" class="hidden-section bg-white p-4 rounded-xl shadow-sm mb-6 flex flex-wrap gap-3 items-center">
+                <label class="text-sm font-bold text-slate-600">Filtrar por estado:</label>
+                <select id="filtroEstado"
+                    class="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary text-sm">
+                    <option value="">Todos</option>
+                    <option value="propuesta">Propuesta</option>
+                    <option value="en_revision">En Revision</option>
+                    <option value="aprobado">Aprobado</option>
+                    <option value="rechazado">Rechazado</option>
+                    <option value="finalizado">Finalizado</option>
+                </select>
+                <button id="btnRefrescar"
+                    class="ml-auto bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
+                    <svg class="icon" viewBox="0 0 24 24" width="16" height="16">
+                        <polyline points="23 4 23 10 17 10"/>
+                        <polyline points="1 20 1 14 7 14"/>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                    Refrescar
+                </button>
+            </div>
+
+            <!-- ===== FORM NUEVA TESIS ===== -->
+            <div id="formTesisContainer" class="hidden bg-white p-6 rounded-xl shadow-md mb-6 animate-fadeIn">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2 text-uniPrimary">
+                    <svg class="icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                    Registrar Nueva Tesis / Monografia
+                </h3>
+                <form id="formTesis" class="space-y-4" enctype="multipart/form-data">
+                    <div>
+                        <label class="block text-sm font-bold mb-1">Titulo *</label>
+                        <input type="text" id="tesisTitulo" required placeholder="Titulo de la tesis o monografia"
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary transition-all duration-200">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">Descripcion *</label>
+                        <textarea id="tesisDescripcion" required placeholder="Descripcion del proyecto" rows="3"
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary transition-all duration-200"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold mb-1">Linea de Investigacion *</label>
+                            <select id="tesisLinea" required
+                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary transition-all duration-200">
+                                <option value="">-- Seleccione --</option>
+                                <option value="IA">Inteligencia Artificial</option>
+                                <option value="Desarrollo Web">Desarrollo Web</option>
+                                <option value="Redes">Redes</option>
+                                <option value="Base de Datos">Base de Datos</option>
+                                <option value="Seguridad">Seguridad</option>
+                                <option value="IoT">IoT</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">Modalidad *</label>
+                            <select id="tesisModalidad" required
+                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary transition-all duration-200">
+                                <option value="">-- Seleccione --</option>
+                                <option value="monografia">Monografia</option>
+                                <option value="tesis">Tesis</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">Tutor Propuesto (opcional)</label>
+                        <div class="relative" id="tutorDropdownWrapper">
+                            <button type="button" id="tutorDropdownBtn"
+                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary transition-all duration-200 text-left flex justify-between items-center bg-white">
+                                <span id="tutorDropdownText" class="text-slate-500">-- Seleccione un docente --</span>
+                                <svg class="icon text-slate-400" viewBox="0 0 24 24" width="16" height="16">
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </button>
+                            <div id="tutorDropdownMenu"
+                                class="hidden absolute z-30 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                            </div>
+                            <input type="hidden" id="tesisTutorPropuesto" value="">
+                        </div>
+                        <small class="text-xs text-slate-500">Si no sabes quien, dejalo vacio; la comision asignara uno.</small>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">Anteproyecto (PDF, max 10MB) *</label>
+                        <input type="file" id="tesisArchivo" accept="application/pdf" required
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-uniSecondary file:text-white hover:file:bg-sky-700 file:cursor-pointer">
+                        <small class="text-xs text-slate-500">Solo PDF, maximo 10 MB</small>
+                    </div>
+                    <div id="tesisAlert" class="hidden p-3 rounded text-sm animate-fadeIn"></div>
+                    <div class="flex space-x-3">
+                        <button type="submit"
+                            class="bg-uniPrimary hover:bg-blue-900 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2">
+                            <span id="tesisSpinner"
+                                class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                            <svg class="icon" viewBox="0 0 24 24" width="16" height="16">
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                            </svg>
+                            <span id="tesisBtnText">Enviar Propuesta</span>
+                        </button>
+                        <button type="button" id="btnCancelarTesis"
+                            class="bg-slate-300 hover:bg-slate-400 px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2">
+                            <svg class="icon" viewBox="0 0 24 24" width="16" height="16">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ===== TABLA DE TESIS ===== -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-100 border-b">
+                            <tr>
+                                <th class="p-3 text-xs font-bold uppercase">Titulo</th>
+                                <th class="p-3 text-xs font-bold uppercase">Estudiante</th>
+                                <th class="p-3 text-xs font-bold uppercase">Linea</th>
+                                <th class="p-3 text-xs font-bold uppercase">Modalidad</th>
+                                <th class="p-3 text-xs font-bold uppercase">Estado</th>
+                                <th class="p-3 text-xs font-bold uppercase">Tutor</th>
+                                <th class="p-3 text-xs font-bold uppercase">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaTesis" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+                <div id="emptyTesis" class="p-8 text-center text-slate-400 italic hidden">
+                    No hay tesis registradas
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SECCION ADMIN ========== -->
+        <div id="adminSection" class="hidden-section max-w-7xl mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-uniPrimary flex items-center gap-2">
+                        <svg class="icon" viewBox="0 0 24 24" width="28" height="28">
+                            <path d="M12 2l9 4v6c0 5.55-3.84 10.74-9 12-5.16-1.26-9-6.45-9-12V6l9-4z"/>
+                            <path d="M9 12l2 2 4-4"/>
+                        </svg>
+                        Panel de Administracion
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-1">Gestiona usuarios, docentes y configuracion del sistema</p>
+                </div>
+                <button id="btnVolverTesis"
+                    class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-2">
+                    <svg class="icon" viewBox="0 0 24 24" width="18" height="18">
+                        <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                    Volver a Tesis
+                </button>
+            </div>
+
+            <!-- ===== TABS ===== -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+                <div class="flex border-b border-slate-200">
+                    <button id="tabUsuarios" class="tab-btn-active px-6 py-3 text-sm font-bold flex items-center gap-2">
+                        <svg class="icon" viewBox="0 0 24 24" width="16" height="16">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        Usuarios
+                    </button>
+                    <button id="tabDocentes" class="tab-btn px-6 py-3 text-sm font-bold flex items-center gap-2">
+                        <svg class="icon" viewBox="0 0 24 24" width="16" height="16">
+                            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                        </svg>
+                        Docentes
+                    </button>
+                    <button id="tabEstadisticas" class="tab-btn px-6 py-3 text-sm font-bold flex items-center gap-2">
+                        <svg class="icon" viewBox="0 0 24 24" width="16" height="16">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                        </svg>
+                        Estadisticas
+                    </button>
+                </div>
+            </div>
+
+            <!-- ===== TAB: USUARIOS ===== -->
+            <div id="contenidoUsuarios" class="space-y-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm flex flex-wrap gap-3 items-center">
+                    <label class="text-sm font-bold text-slate-600">Filtrar por rol:</label>
+                    <select id="filtroRolUsuarios"
+                        class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-uniSecondary">
+                        <option value="">Todos</option>
+                        <option value="estudiante">Estudiante</option>
+                        <option value="docente">Docente</option>
+                        <option value="comision">Comision</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <label class="text-sm font-bold text-slate-600 ml-4">Estado:</label>
+                    <select id="filtroActivoUsuarios"
+                        class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-uniSecondary">
+                        <option value="">Todos</option>
+                        <option value="true">Activos</option>
+                        <option value="false">Inactivos</option>
+                    </select>
+                    <button id="btnNuevoUsuario"
+                        class="ml-auto bg-uniPrimary hover:bg-blue-900 text-white px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-2">
+                        <svg class="icon" viewBox="0 0 24 24" width="16" height="16">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Nuevo Usuario
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-100 border-b">
+                                <tr>
+                                    <th class="p-3 text-xs font-bold uppercase">Nombre</th>
+                                    <th class="p-3 text-xs font-bold uppercase">Email</th>
+                                    <th class="p-3 text-xs font-bold uppercase">Carnet</th>
+                                    <th class="p-3 text-xs font-bold uppercase">Rol</th>
+                                    <th class="p-3 text-xs font-bold uppercase">Estado</th>
+                                    <th class="p-3 text-xs font-bold uppercase">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaUsuarios" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                    <div id="emptyUsuarios" class="p-8 text-center text-slate-400 italic hidden">
+                        No hay usuarios registrados
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: DOCENTES ===== -->
+            <div id="contenidoDocentes" class="space-y-4 hidden">
+                <div class="bg-white p-4 rounded-xl shadow-sm flex flex-wrap gap-3 items-center">
+                    <label class="text-sm font-bold text-slate-600">Filtrar por especialidad:</label>
+                    <select id="filtroEspecialidadDocentes"
+                        class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-uniSecondary">
+                        <option value="">Todas</option>
+                        <option value="IA">Inteligencia Artificial</option>
+                        <option value="Desarrollo Web">Desarrollo Web</option>
+                        <option value="Redes">Redes</option>
+                        <option value="Base de Datos">Base de Datos</option>
+                        <option value="Seguridad">Seguridad</option>
+                        <option value="IoT">IoT</option>
+                        <option value="General">General</option>
+                    </select>
+                    <button id="btnNuevoDocente"
+                        class="ml-auto bg-uniSecondary hover:bg-sky-700 text-white px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-2">
+                        <svg class="icon" viewBox="0 0 24 24" width="16" height="16">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Nuevo Docente
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-100 border-b">
+                                <tr>
+                                    <th class="p-3 text-xs font-bold uppercase">Titulo</th>
+                                    <th class="p-3 text-xs font-bold uppercase">Nombre</th>
+                                    <th class="p-3 text-xs font-bold uppercase">Email</th>
+                                    <th class="p-3 text-xs font-bold uppercase">Especialidad</th>
+                                    <th class="p-3 text-xs font-bold uppercase">Estado</th>
+                                    <th class="p-3 text-xs font-bold uppercase">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaDocentes" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                    <div id="emptyDocentes" class="p-8 text-center text-slate-400 italic hidden">
+                        No hay docentes en el catalogo
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: ESTADISTICAS ===== -->
+            <div id="contenidoEstadisticas" class="hidden space-y-6">
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-slate-400">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Usuarios</p>
+                        <p id="adminStatUsuarios" class="text-2xl font-bold text-slate-800">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-400">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Estudiantes</p>
+                        <p id="adminStatEstudiantes" class="text-2xl font-bold text-yellow-600">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-sky-400">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Docentes</p>
+                        <p id="adminStatDocentes" class="text-2xl font-bold text-sky-600">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-purple-400">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Comision</p>
+                        <p id="adminStatComision" class="text-2xl font-bold text-purple-600">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-rose-400">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Admins</p>
+                        <p id="adminStatAdmin" class="text-2xl font-bold text-rose-600">0</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-slate-400">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Total Tesis</p>
+                        <p id="adminStatTesisTotal" class="text-2xl font-bold text-slate-800">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-400">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Propuestas</p>
+                        <p id="adminStatTesisPropuesta" class="text-2xl font-bold text-yellow-600">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-400">
+                        <p class="text-xs text-slate-500 font-bold uppercase">En Revision</p>
+                        <p id="adminStatTesisRevision" class="text-2xl font-bold text-blue-600">0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-400">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Aprobadas</p>
+                        <p id="adminStatTesisAprobada" class="text-2xl font-bold text-green-600">0</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Rechazadas</p>
+                        <p id="adminStatTesisRechazada" class="text-3xl font-bold text-red-600">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Finalizadas</p>
+                        <p id="adminStatTesisFinalizada" class="text-3xl font-bold text-purple-600">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <p class="text-xs text-slate-500 font-bold uppercase">Docentes en Catalogo</p>
+                        <p id="adminStatDocentesCatalogo" class="text-3xl font-bold text-uniPrimary">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ========== MODAL GESTION TESIS ========== -->
+    <div id="modalGestion"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-fadeIn">
+            <div class="p-6 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-white z-10">
+                <h3 class="text-lg font-bold text-uniPrimary flex items-center gap-2">
+                    <svg class="icon" viewBox="0 0 24 24" width="20" height="20">
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    </svg>
+                    Gestion de Tesis
+                </h3>
+                <button onclick="cerrarModal()"
+                    class="text-slate-400 hover:text-slate-600 text-2xl leading-none transition-colors">&times;</button>
+            </div>
+            <div class="p-6 space-y-4" id="modalContent">
+            </div>
+        </div>
     </div>
 
-    <!-- Tabla de Tesis -->
-    <div class="bg-white rounded-xl shadow-md overflow-hidden">
-      <table class="w-full text-left">
-        <thead class="bg-slate-100 border-b">
-          <tr>
-            <th class="p-3 text-xs font-bold uppercase">Titulo</th>
-            <th class="p-3 text-xs font-bold uppercase">Estudiante</th>
-            <th class="p-3 text-xs font-bold uppercase">Linea</th>
-            <th class="p-3 text-xs font-bold uppercase">Estado</th>
-            <th class="p-3 text-xs font-bold uppercase">Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tablaTesis" class="divide-y divide-slate-100"></tbody>
-      </table>
-      <div id="emptyTesis" class="p-8 text-center text-slate-400 italic hidden">
-        No hay tesis registradas
-      </div>
+    <!-- ========== MODAL USUARIO (Admin) ========== -->
+    <div id="modalUsuario" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-fadeIn">
+            <div class="p-6 border-b border-slate-200 flex justify-between items-center">
+                <h3 id="modalUsuarioTitulo" class="text-lg font-bold text-uniPrimary">Nuevo Usuario</h3>
+                <button onclick="cerrarModalUsuario()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="usuarioId">
+                <div>
+                    <label class="block text-sm font-bold mb-1">Nombre Completo *</label>
+                    <input type="text" id="usuarioNombre"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Email *</label>
+                    <input type="email" id="usuarioEmail"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary">
+                </div>
+                <div id="passwordField">
+                    <label class="block text-sm font-bold mb-1">Contrasena *</label>
+                    <input type="password" id="usuarioPassword" placeholder="Min 8, 1 mayuscula, 1 numero"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary">
+                    <small class="text-xs text-slate-500">Solo si creas un usuario nuevo o quieres cambiar la contrasena</small>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Carnet</label>
+                    <input type="text" id="usuarioCarnet" placeholder="Ej. 2026-0001U"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Rol *</label>
+                    <select id="usuarioRol"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary">
+                        <option value="estudiante">Estudiante</option>
+                        <option value="docente">Docente / Tutor</option>
+                        <option value="comision">Comision</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div id="usuarioAlert" class="hidden p-3 rounded text-sm"></div>
+                <div class="flex gap-2 pt-4">
+                    <button onclick="guardarUsuario()"
+                        class="flex-1 bg-uniPrimary hover:bg-blue-900 text-white py-2 rounded-lg font-semibold">
+                        Guardar
+                    </button>
+                    <button onclick="cerrarModalUsuario()"
+                        class="flex-1 bg-slate-300 hover:bg-slate-400 py-2 rounded-lg font-semibold">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <footer class="bg-slate-900 text-slate-400 text-xs py-4 text-center mt-12">
-    <p>&copy; 2026 Universidad Nacional de Ingenieria - DATIC</p>
-  </footer>
+    <!-- ========== MODAL DOCENTE (Admin) ========== -->
+    <div id="modalDocente" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full animate-fadeIn">
+            <div class="p-6 border-b border-slate-200 flex justify-between items-center">
+                <h3 id="modalDocenteTitulo" class="text-lg font-bold text-uniPrimary">Nuevo Docente</h3>
+                <button onclick="cerrarModalDocente()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="docenteId">
+                <div>
+                    <label class="block text-sm font-bold mb-1">Titulo</label>
+                    <select id="docenteTitulo"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary">
+                        <option value="MSc.">MSc.</option>
+                        <option value="Dr.">Dr.</option>
+                        <option value="Dra.">Dra.</option>
+                        <option value="Ing.">Ing.</option>
+                        <option value="Lic.">Lic.</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Nombre Completo *</label>
+                    <input type="text" id="docenteNombre"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Email *</label>
+                    <input type="email" id="docenteEmail"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Especialidad *</label>
+                    <select id="docenteEspecialidad"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary">
+                        <option value="IA">Inteligencia Artificial</option>
+                        <option value="Desarrollo Web">Desarrollo Web</option>
+                        <option value="Redes">Redes</option>
+                        <option value="Base de Datos">Base de Datos</option>
+                        <option value="Seguridad">Seguridad</option>
+                        <option value="IoT">IoT</option>
+                        <option value="General">General</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Telefono</label>
+                    <input type="text" id="docenteTelefono" placeholder="Ej. 8888-8888"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Maximo de Tesis</label>
+                    <input type="number" id="docenteMaxTesis" value="5" min="1" max="20"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary">
+                </div>
+                <div id="docenteAlert" class="hidden p-3 rounded text-sm"></div>
+                <div class="flex gap-2 pt-4">
+                    <button onclick="guardarDocente()"
+                        class="flex-1 bg-uniSecondary hover:bg-sky-700 text-white py-2 rounded-lg font-semibold">
+                        Guardar
+                    </button>
+                    <button onclick="cerrarModalDocente()"
+                        class="flex-1 bg-slate-300 hover:bg-slate-400 py-2 rounded-lg font-semibold">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  <script src="js/app.js"></script>
+    <!-- ========== MODAL RESET PASSWORD ========== -->
+    <div id="modalResetPassword" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full animate-fadeIn">
+            <div class="p-6 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-uniPrimary">Resetear Contrasena</h3>
+                <button onclick="cerrarModalReset()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="resetUserId">
+                <p class="text-sm text-slate-600">Nueva contrasena para: <strong id="resetUserName"></strong></p>
+                <div>
+                    <label class="block text-sm font-bold mb-1">Nueva Contrasena *</label>
+                    <input type="password" id="resetPassword" placeholder="Min 8, 1 mayuscula, 1 numero"
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-uniSecondary">
+                </div>
+                <div id="resetAlert" class="hidden p-3 rounded text-sm"></div>
+                <div class="flex gap-2 pt-4">
+                    <button onclick="confirmarResetPassword()"
+                        class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg font-semibold">
+                        Resetear
+                    </button>
+                    <button onclick="cerrarModalReset()"
+                        class="flex-1 bg-slate-300 hover:bg-slate-400 py-2 rounded-lg font-semibold">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-4 text-center mt-auto">
+        <p>&copy; 2026 Universidad Nacional de Ingenieria - DATIC | Diseno de Sistemas en Internet</p>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
 </body>
+
 </html>

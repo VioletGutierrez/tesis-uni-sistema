@@ -32,10 +32,17 @@ app.use(morgan('combined'));
 // Servir archivos estaticos
 app.use('/uploads', express.static(uploadsDir));
 
+// ==================== RUTAS ====================
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/tesis', require('./routes/tesisRoutes'));
+app.use('/api/lineas', require('./routes/lineaRoutes'));
+app.use('/api/docentes', require('./routes/docenteRoutes'));
 // Rutas
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/tesis', require('./routes/tesisRoutes'));
 app.use('/api/lineas', require('./routes/lineaRoutes'));
+app.use('/api/docentes', require('./routes/docenteRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes')); // ← NUEVA
 
 // Ruta raiz
 app.get('/', (req, res) => {
@@ -46,6 +53,8 @@ app.get('/', (req, res) => {
       auth: '/api/auth',
       tesis: '/api/tesis',
       lineas: '/api/lineas',
+      docentes: '/api/docentes',
+      admin: '/api/admin',
       health: '/api/tesis/health'
     }
   });
