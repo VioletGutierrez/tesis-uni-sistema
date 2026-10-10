@@ -1,0 +1,154 @@
+x<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UNI - Sistema de Gestion de Tesis</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            uniPrimary: '#1e3a8a',
+            uniSecondary: '#0284c7'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="h-full bg-slate-50 font-sans text-slate-800">
+  <!-- HEADER -->
+  <header class="bg-uniPrimary text-white shadow-md" role="banner">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="bg-white text-uniPrimary font-bold p-2 rounded shadow text-sm">UNI</div>
+        <h1 class="text-lg font-bold">Sistema de Gestion de Tesis</h1>
+      </div>
+      <div id="userInfo" class="text-sm hidden">
+        <span id="userName"></span>
+        <button id="btnLogout" class="ml-3 bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-xs">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- LOGIN -->
+  <div id="loginSection" class="max-w-md mx-auto mt-16 bg-white p-8 rounded-xl shadow-lg">
+    <h2 class="text-2xl font-bold text-center text-uniPrimary mb-6">Iniciar Sesion</h2>
+    <form id="formLogin" class="space-y-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">Correo Institucional</label>
+        <input type="email" id="loginEmail" required placeholder="usuario@uni.edu.ni"
+          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary focus:outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Contrasena</label>
+        <input type="password" id="loginPassword" required placeholder="********"
+          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary focus:outline-none">
+      </div>
+      <div id="loginAlert" class="hidden p-3 rounded text-sm"></div>
+      <button type="submit" class="w-full bg-uniPrimary hover:bg-blue-900 text-white py-2 rounded-lg font-semibold">
+        Ingresar
+      </button>
+    </form>
+    <p class="text-center text-xs text-slate-500 mt-4">
+      <a href="#" id="linkRegister" class="text-uniSecondary hover:underline">Registrarse</a>
+    </p>
+  </div>
+
+  <!-- REGISTRO -->
+  <div id="registerSection" class="max-w-md mx-auto mt-16 bg-white p-8 rounded-xl shadow-lg hidden">
+    <h2 class="text-2xl font-bold text-center text-uniPrimary mb-6">Registro</h2>
+    <form id="formRegister" class="space-y-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">Nombre Completo</label>
+        <input type="text" id="regNombre" required
+          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Correo</label>
+        <input type="email" id="regEmail" required
+          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Contrasena (min 8, 1 mayuscula, 1 numero)</label>
+        <input type="password" id="regPassword" required
+          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Carnet</label>
+        <input type="text" id="regCarnet" placeholder="2026-0001U"
+          class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-uniSecondary">
+      </div>
+      <div id="registerAlert" class="hidden p-3 rounded text-sm"></div>
+      <button type="submit" class="w-full bg-uniPrimary hover:bg-blue-900 text-white py-2 rounded-lg font-semibold">
+        Registrarse
+      </button>
+    </form>
+    <p class="text-center text-xs text-slate-500 mt-4">
+      <a href="#" id="linkLogin" class="text-uniSecondary hover:underline">Volver al login</a>
+    </p>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboardSection" class="hidden max-w-7xl mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold text-uniPrimary">Panel de Tesis</h2>
+      <button id="btnNuevaTesis" class="bg-uniSecondary hover:bg-sky-700 text-white px-4 py-2 rounded-lg font-semibold">
+        + Nueva Tesis
+      </button>
+    </div>
+
+    <!-- Formulario Nueva Tesis -->
+    <div id="formTesisContainer" class="hidden bg-white p-6 rounded-xl shadow-md mb-6">
+      <h3 class="text-lg font-bold mb-4">Registrar Nueva Tesis</h3>
+      <form id="formTesis" class="space-y-4">
+        <input type="text" id="tesisTitulo" required placeholder="Titulo de la tesis"
+          class="w-full px-3 py-2 border rounded-lg">
+        <textarea id="tesisDescripcion" required placeholder="Descripcion" rows="3"
+          class="w-full px-3 py-2 border rounded-lg"></textarea>
+        <select id="tesisLinea" required class="w-full px-3 py-2 border rounded-lg">
+          <option value="">-- Seleccione linea de investigacion --</option>
+          <option value="IA">Inteligencia Artificial</option>
+          <option value="Desarrollo Web">Desarrollo Web</option>
+          <option value="Redes">Redes</option>
+          <option value="Base de Datos">Base de Datos</option>
+          <option value="Seguridad">Seguridad</option>
+          <option value="IoT">IoT</option>
+        </select>
+        <div id="tesisAlert" class="hidden p-3 rounded text-sm"></div>
+        <div class="flex space-x-3">
+          <button type="submit" class="bg-uniPrimary text-white px-4 py-2 rounded-lg">Guardar</button>
+          <button type="button" id="btnCancelarTesis" class="bg-slate-300 px-4 py-2 rounded-lg">Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Tabla de Tesis -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+      <table class="w-full text-left">
+        <thead class="bg-slate-100 border-b">
+          <tr>
+            <th class="p-3 text-xs font-bold uppercase">Titulo</th>
+            <th class="p-3 text-xs font-bold uppercase">Estudiante</th>
+            <th class="p-3 text-xs font-bold uppercase">Linea</th>
+            <th class="p-3 text-xs font-bold uppercase">Estado</th>
+            <th class="p-3 text-xs font-bold uppercase">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaTesis" class="divide-y divide-slate-100"></tbody>
+      </table>
+      <div id="emptyTesis" class="p-8 text-center text-slate-400 italic hidden">
+        No hay tesis registradas
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-slate-900 text-slate-400 text-xs py-4 text-center mt-12">
+    <p>&copy; 2026 Universidad Nacional de Ingenieria - DATIC</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
