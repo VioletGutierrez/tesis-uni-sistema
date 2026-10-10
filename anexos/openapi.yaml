@@ -1,0 +1,537 @@
+openapi: 3.0.3
+info:
+  title: API Sistema de Gestion de Tesis UNI
+  description: |
+    API RESTful del Sistema de Gestión de Tesis Monográficas de la UNI.
+    
+    **Roles soportados:**
+    - Estudiante
+    - Docente / Tutor
+    - Comisión
+    - Administrador
+    
+    **URL Producción:** https://tesis-uni-api.onrender.com
+  version: 1.0.0
+  contact:
+    name: Violet Gutierrez
+    email: violet.gtz2003@gmail.com
+
+servers:
+  - url: https://tesis-uni-api.onrender.com
+    description: Servidor de Producción (Render)
+  - url: http://localhost:5000
+    description: Servidor de Desarrollo Local
+
+tags:
+  - name: Health
+    description: Estado del sistema
+  - name: Auth
+    description: Autenticación y registro
+  - name: Tesis
+    description: Gestión de tesis monográficas
+  - name: Docentes
+    description: Catálogo de docentes
+  - name: Admin
+    description: Panel de administración
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@uni.edu.ni
+        password:
+          type: string
+          example: Admin1234
+
+    RegisterRequest:
+      type: object
+      required: [nombre, email, password, rol]
+      properties:
+        nombre:
+          type: string
+          example: Juan Perez
+        email:
+          type: string
+          format: email
+          example: juan.perez@uni.edu.ni
+        password:
+          type: string
+          example: Password123
+        rol:
+          type: string
+          enum: [estudiante, docente, comision, admin]
+          example: estudiante
+        carnet:
+          type: string
+          example: 2026-0001U
+        carrera:
+          type: string
+          example: Ingenieria de Sistemas
+
+    CrearTesisRequest:
+      type: object
+      required: [titulo, descripcion, lineaInvestigacion, modalidad]
+      properties:
+        titulo:
+          type: string
+          example: Sistema de gestion academica
+        descripcion:
+          type: string
+          example: Descripcion del proyecto
+        lineaInvestigacion:
+          type: string
+          enum: [IA, Desarrollo Web, Redes, Base de Datos, Seguridad, IoT]
+          example: Desarrollo Web
+        modalidad:
+          type: string
+          enum: [tesis, monografia]
+          example: monografia
+        docentePropuesto:
+          type: string
+          description: ID del docente propuesto (opcional)
+
+    AsignarTutorRequest:
+      type: object
+      required: [docenteId]
+      properties:
+        docenteId:
+          type: string
+          example: 507f1f77bcf86cd799439011
+
+    CambiarEstadoRequest:
+      type: object
+      required: [nuevoEstado]
+      properties:
+        nuevoEstado:
+          type: string
+          enum: [propuesta, en_revision, aprobado, rechazado, finalizado]
+          example: aprobado
+        motivo:
+          type: string
+          example: Cumple con los requisitos
+        calificacion:
+          type: number
+          example: 95
+
+    ObservacionRequest:
+      type: object
+      required: [texto]
+      properties:
+        texto:
+          type: string
+          example: Revisar la seccion 3.2
+        tipo:
+          type: string
+          enum: [comentario, correccion, aprobacion, rechazo]
+          example: correccion
+
+    CrearUsuarioRequest:
+      type: object
+      required: [nombre, email, password, rol]
+      properties:
+        nombre:
+          type: string
+          example: Maria Lopez
+        email:
+          type: string
+          format: email
+          example: maria.lopez@uni.edu.ni
+        password:
+          type: string
+          example: Password123
+        rol:
+          type: string
+          enum: [estudiante, docente, comision, admin]
+          example: estudiante
+        carnet:
+          type: string
+          example: 2026-0099X
+
+paths:
+  /:
+    get:
+      tags: [Health]
+      summary: Endpoint raiz
+      description: Informacion general de la API
+      responses:
+        '200':
+          description: OK
+
+  /api/tesis/health:
+    get:
+      tags: [Health]
+      summary: Health Check
+      description: Verifica el estado del servidor y la conexion a MongoDB
+      responses:
+        '200':
+          description: Sistema saludable
+          content:
+            application/json:
+              example:
+                status: Healthy
+                timestamp: "2026-10-10T06:04:04.027Z"
+                database: conectado
+                uptime: 61 segundos
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrar nuevo usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Usuario creado exitosamente
+        '400':
+          description: Datos invalidos o usuario ya existe
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login exitoso, devuelve token JWT
+          content:
+            application/json:
+              example:
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                user:
+                  id: 507f1f77bcf86cd799439011
+                  nombre: Administrador Sistema
+                  email: admin@uni.edu.ni
+                  rol: admin
+        '400':
+          description: Credenciales invalidas
+
+  /api/auth/profile:
+    get:
+      tags: [Auth]
+      summary: Obtener perfil del usuario autenticado
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Perfil del usuario
+        '401':
+          description: Token invalido o expirado
+
+  /api/tesis:
+    get:
+      tags: [Tesis]
+      summary: Listar tesis (filtrado por rol)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de tesis segun permisos del usuario
+    post:
+      tags: [Tesis]
+      summary: Crear nueva tesis (estudiante/admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                titulo:
+                  type: string
+                descripcion:
+                  type: string
+                lineaInvestigacion:
+                  type: string
+                modalidad:
+                  type: string
+                docentePropuesto:
+                  type: string
+                archivo:
+                  type: string
+                  format: binary
+                  description: Anteproyecto en PDF (max 10MB)
+      responses:
+        '201':
+          description: Tesis creada exitosamente
+
+  /api/tesis/estadisticas:
+    get:
+      tags: [Tesis]
+      summary: Estadisticas de tesis (docente/comision/admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Contadores por estado
+
+  /api/tesis/{id}:
+    get:
+      tags: [Tesis]
+      summary: Obtener tesis por ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalle de la tesis
+        '404':
+          description: Tesis no encontrada
+    delete:
+      tags: [Tesis]
+      summary: Eliminar tesis (comision/admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tesis eliminada
+
+  /api/tesis/{id}/asignar-tutor:
+    put:
+      tags: [Tesis]
+      summary: Asignar tutor oficial (comision/admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsignarTutorRequest'
+      responses:
+        '200':
+          description: Tutor asignado
+
+  /api/tesis/{id}/estado:
+    put:
+      tags: [Tesis]
+      summary: Cambiar estado de tesis (docente/comision/admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambiarEstadoRequest'
+      responses:
+        '200':
+          description: Estado actualizado
+
+  /api/tesis/{id}/observacion:
+    post:
+      tags: [Tesis]
+      summary: Agregar observacion (docente/comision/admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObservacionRequest'
+      responses:
+        '200':
+          description: Observacion agregada
+
+  /api/docentes:
+    get:
+      tags: [Docentes]
+      summary: Listar docentes
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de docentes activos
+
+  /api/docentes/{id}:
+    get:
+      tags: [Docentes]
+      summary: Obtener docente por ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalle del docente
+
+  /api/admin/estadisticas:
+    get:
+      tags: [Admin]
+      summary: Estadisticas globales del sistema
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Contadores globales
+
+  /api/admin/usuarios:
+    get:
+      tags: [Admin]
+      summary: Listar usuarios
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios
+    post:
+      tags: [Admin]
+      summary: Crear nuevo usuario
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearUsuarioRequest'
+      responses:
+        '201':
+          description: Usuario creado
+
+  /api/admin/usuarios/{id}:
+    get:
+      tags: [Admin]
+      summary: Obtener usuario por ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalle del usuario
+    put:
+      tags: [Admin]
+      summary: Actualizar usuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuario actualizado
+    delete:
+      tags: [Admin]
+      summary: Eliminar usuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuario eliminado
+
+  /api/admin/usuarios/{id}/reset-password:
+    put:
+      tags: [Admin]
+      summary: Resetear contrasena
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Contrasena actualizada
+
+  /api/admin/usuarios/{id}/desactivar:
+    put:
+      tags: [Admin]
+      summary: Desactivar usuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuario desactivado
+
+  /api/admin/usuarios/{id}/activar:
+    put:
+      tags: [Admin]
+      summary: Activar usuario
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuario activado
